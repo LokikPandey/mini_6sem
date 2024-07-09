@@ -7,11 +7,50 @@ from keras.models import load_model
 import streamlit as st
 yf.pdr_override()
 
+st.set_page_config(
+    page_title="Stock Trend Prediction",
+    # layout="wide",
+    # initial_sidebar_state="expanded",
+)
+
+# Custom CSS
+st.markdown(
+    """
+    <style>
+    .main {
+        background-color: purple;
+    }
+    *{
+        border-radius:15px;
+        font-family: comic-sans;
+        font-size:20px;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .stTextInput>div>input {
+        background-color: #e8f0fe;
+    }
+    .stMarkdown {
+        font-family: 'Arial';
+    }
+    .css-1aumxhk {
+        text-align: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title('Stock Trend Prediction')
 user_input=st.text_input('Enter the stock ticker','AAPL')
-data=pdr.get_data_yahoo(user_input,'2010-01-01','2024-01-01')
+user_input_sd=st.text_input('Enter the start date','2010-01-01')
+user_input_ed=st.text_input('Enter the end date','2024-01-01')
+data=pdr.get_data_yahoo(user_input,user_input_sd,user_input_ed)
 
-st.subheader('Data from 2010 - 2024')
+st.subheader('Data from {} - {}'.format(user_input_sd,user_input_ed))
 st.write(data.describe())
 
 st.subheader('Closing Price vs Time Chart')
@@ -71,8 +110,12 @@ y_test=y_test*scale_factor
 #final graph
 st.subheader('Prediction vs Original')
 fig2=plt.figure(figsize=(12,6))
-plt.plot(y_test,'b',label ='Original Price')
-plt.plot(y_pred,'r',label='Predicted Price')
+# plt.plot(y_test,'b',label ='Original Price')
+# plt.plot(y_pred,'r',label='Predicted Price')
+test_dates = data.index[split_index:]
+
+plt.plot(test_dates, y_test, 'b', label ='Original Price')
+plt.plot(test_dates, y_pred, 'r', label='Predicted Price')
 plt.xlabel('Time')
 plt.ylabel('Price')
 plt.legend()
@@ -90,3 +133,9 @@ st.write(f'Root Mean Squared Error: {rmse}')
 st.write(f'Mean Absolute Error: {mae}')
 st.write(f'R-squared: {r2}')
 
+if y_pred[-1] > y_test[-1]:
+    st.subheader('Investment Advice')
+    st.write('The predicted price is higher than the actual price. It might be a good time to invest.')
+else:
+    st.subheader('Investment Advice')
+    st.write('The predicted price is lower than the actual price. It might not be the best time to invest.')
